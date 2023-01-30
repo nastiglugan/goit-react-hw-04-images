@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Component } from 'react';
+import { useState } from 'react';
 import {
   SearchbarWrap,
   SearchForm,
@@ -9,52 +9,45 @@ import {
 import { FaSearch } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
-class Searchbar extends Component {
-  static propTypes = {
-    onSubmit: PropTypes.func.isRequired,
+export const Searchbar = ({ onSubmit }) => {
+  const [imgName, setImgName] = useState('');
+
+  const handleIputChange = e => {
+    setImgName(e.currentTarget.value.toLowerCase());
   };
 
-  state = {
-    imgName: '',
-  };
-
-  handleIputChange = e => {
-    this.setState({ imgName: e.currentTarget.value.toLowerCase() });
-  };
-
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
-
-    if (this.state.imgName.trim() === '') {
+    if (imgName.trim() === '') {
       toast.error('Ти нічого не ввів в пошук!');
       return;
     }
-    this.props.onSubmit(this.state);
+    onSubmit(imgName);
 
-    this.setState({ imgName: '' });
+    setImgName('');
   };
 
-  render() {
-    return (
-      <SearchbarWrap>
-        <Toaster position="top-right" reverseOrder={false} />
-        <SearchForm onSubmit={this.handleSubmit}>
-          <SearchBtn type="submit">
-            <FaSearch color="black" />
-          </SearchBtn>
+  return (
+    <SearchbarWrap>
+      <Toaster position="top-right" reverseOrder={false} />
+      <SearchForm onSubmit={handleSubmit}>
+        <SearchBtn type="submit">
+          <FaSearch color="black" />
+        </SearchBtn>
 
-          <SearchInput
-            type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            value={this.state.imgName}
-            onChange={this.handleIputChange}
-          />
-        </SearchForm>
-      </SearchbarWrap>
-    );
-  }
-}
+        <SearchInput
+          type="text"
+          autoComplete="off"
+          autoFocus
+          placeholder="Search images and photos"
+          value={imgName}
+          onChange={handleIputChange}
+        />
+      </SearchForm>
+    </SearchbarWrap>
+  );
+};
 
-export default Searchbar;
+Searchbar.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+};

@@ -1,63 +1,34 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { ImageGalleryItems, ImageGalleryImg } from './ImageGalleryItem.styled';
-import LargeImgModal from '../Modal/Modal';
+import { LargeImgModal } from '../Modal/Modal';
 
-class ImageGalleryItem extends Component {
-  static propTypes = {
-    image: PropTypes.object.isRequired,
+export const ImageGalleryItem = ({ image }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [imgforModal, setImgforModal] = useState('');
+
+  const { tags, img, imgLarge } = image;
+
+  const onShowLargeImage = img => {
+    setShowModal(prevState => !prevState);
+    setImgforModal(img);
   };
+  return (
+    <div>
+      <ImageGalleryItems onClick={() => onShowLargeImage(imgLarge)}>
+        <ImageGalleryImg src={img} alt={tags} width="310" height="230" />
+      </ImageGalleryItems>
+      {showModal && (
+        <LargeImgModal
+          largeImg={imgforModal}
+          onClose={onShowLargeImage}
+          tags={tags}
+        />
+      )}
+    </div>
+  );
+};
 
-  state = {
-    showModal: false,
-    imgforModal: '',
-  };
-
-  onShowLargeImage = img => {
-    this.setState(prevState => ({
-      showModal: !prevState.showModal,
-    }));
-    this.setState({ imgforModal: img });
-  };
-
-  // toggle = () => {
-  //   this.setState(prevState => ({
-  //     showModal: !prevState.showModal,
-  //   }));
-  // };
-
-  render() {
-    const { tags, img, imgLarge } = this.props.image;
-    const { showModal, imgforModal } = this.state;
-
-    return (
-      <div>
-        <ImageGalleryItems onClick={() => this.onShowLargeImage(imgLarge)}>
-          <ImageGalleryImg src={img} alt={tags} width="310" height="230" />
-        </ImageGalleryItems>
-        {showModal && (
-          <LargeImgModal
-            largeImg={imgforModal}
-            onClose={this.onShowLargeImage}
-            tags={tags}
-          />
-        )}
-      </div>
-    );
-  }
-}
-
-export default ImageGalleryItem;
-
-// ImageGalleryItem.propTypes = {
-//   image: PropTypes.string.isRequired,
-//   tags: PropTypes.string.isRequired,
-// };
-
-// export class ImageGalleryItem = ({ image, tags }) => {
-//   return (
-//     <ImageGalleryItems>
-//       <ImageGalleryImg src={image} alt={tags} width="310" height="230" />
-//     </ImageGalleryItems>
-//   );
-// };
+ImageGalleryItem.propTypes = {
+  image: PropTypes.object.isRequired,
+};

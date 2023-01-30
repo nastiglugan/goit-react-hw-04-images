@@ -1,89 +1,70 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { AppWrap } from './App.styled';
-import Searchbar from './Searchbar/Searchbar';
+import { Searchbar } from './Searchbar/Searchbar';
 import { fetchImgByName } from './api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { LoadMoreBtn } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import toast, { Toaster } from 'react-hot-toast';
 
-class App extends Component {
-  state = {
-    imgName: '',
-    page: 1,
-    fetchApi: [],
-    error: null,
-    isLoading: false,
-    lastPage: 0,
+export const App = () => {
+  const [imgName, setImgName] = useState('');
+  const [page, setPage] = useState(1);
+  const [fetchApi, setFetchApi] = useState([]);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastPage, setLastPage] = useState(0);
+
+  const formSubmitHandler = imgName => {
+    setImgName(imgName);
+    setPage(1);
+    setFetchApi([]);
   };
 
-  formSubmitHandler = ({ imgName }) => {
-    this.setState({ imgName, page: 1, fetchApi: [] });
+  const onChangePageNumber = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  onChangePageNumber = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
-
-  async componentDidUpdate(prevProps, prevState) {
-    const prevName = prevState.imgName;
-    const nextName = this.state.imgName;
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
-    const prevImages = this.state.fetchApi;
-
-    if (prevName !== nextName || prevPage !== nextPage) {
+  useEffect(() => {
+    if (imgName === '') {
+      return;
+    }
+    async function fetchImages() {
       try {
-        this.setState({ isLoading: true });
-
-        const images = await fetchImgByName(nextName, nextPage);
+        setIsLoading(true);
+        const images = await fetchImgByName(imgName, page);
 
         if (images.hits.length === 0) {
           throw new Error();
         }
-
-        this.setState({
-          fetchApi: [...prevImages, ...images.hits],
-          lastPage: Math.ceil(images.totalHits / 12),
-        });
+        setFetchApi(prevState => [...prevState, ...images.hits]);
+        setLastPage(Math.ceil(images.totalHits / 12));
       } catch (error) {
-        this.setState({
-          error: toast.error('Щось пішло не так! Перезагрузи сторінку'),
-        });
+        setError(toast.error('Щось пішло не так! Перезагрузи сторінку'));
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
     }
-  }
+    fetchImages();
+  }, [imgName, page]);
 
-  makeImgParametrs = () => {
-    return this.state.fetchApi.map(image => ({
-      id: image.id,
-      img: image.webformatURL,
-      imgLarge: image.largeImageURL,
-      tags: image.tags,
-    }));
-  };
+  const makeImgParametrs = fetchApi.map(image => ({
+    id: image.id,
+    img: image.webformatURL,
+    imgLarge: image.largeImageURL,
+    tags: image.tags,
+  }));
 
-  render() {
-    const { lastPage, isLoading, error, page } = this.state;
-    const imagesParametrs = this.makeImgParametrs();
+  return (
+    <AppWrap>
+      <Searchbar onSubmit={formSubmitHandler} />
+      {error !== null && <Toaster position="top-right" reverseOrder={false} />}
 
-    return (
-      <AppWrap>
-        <Searchbar onSubmit={this.formSubmitHandler} />
-        {error !== null && (
-          <Toaster position="top-right" reverseOrder={false} />
-        )}
-
-        <ImageGallery images={imagesParametrs} />
-        {imagesParametrs.length !== 0 && page < lastPage && (
-          <LoadMoreBtn addPage={this.onChangePageNumber} />
-        )}
-        {isLoading && <Loader />}
-      </AppWrap>
-    );
-  }
-}
-
-export default App;
+      <ImageGallery images={makeImgParametrs} />
+      {makeImgParametrs.length !== 0 && page < lastPage && (
+        <LoadMoreBtn addPage={onChangePageNumber} />
+      )}
+      {isLoading && <Loader />}
+    </AppWrap>
+  );
+};
